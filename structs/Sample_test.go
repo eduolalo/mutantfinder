@@ -9,7 +9,7 @@ func TestSample(t *testing.T) {
 	t.Run("Error en el Unmarshal del []byte de la muestra", func(t *testing.T) {
 
 		// La cadena tiene llaves en lugar de corchetes
-		body := `{"ATGCGAAT","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"}`
+		body := `{"dna":{"ATGCGAAT","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"}}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err == nil {
 			t.Fatal("Se esperaba un error en el desarmado en la estructura")
@@ -19,14 +19,14 @@ func TestSample(t *testing.T) {
 	t.Run("Error en la longitud de un row de la muestra", func(t *testing.T) {
 
 		// La primer cadena tiene 8 letras, las otras 7 y la longitud del arreglo es de 7
-		body := `["ATGCGAAT","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"]`
+		body := `{"dna":["ATGCGAAT","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"]}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err != nil {
 			t.Fatal("Unmarshal: ", err.Error())
 		}
 
 		// Validaciones del sample
-		if err := sample.ValidateADN(); err == nil {
+		if err := sample.ValidateDNA(); err == nil {
 
 			t.Fatal("Se esperaba un error por no poder generar una tabla de NxN")
 
@@ -36,14 +36,14 @@ func TestSample(t *testing.T) {
 	t.Run("Error de tabla MxN", func(t *testing.T) {
 
 		// La longitud de las cadenas es de 8 y del arreglo es de 7
-		body := `["ATGCGAAT","CAGTGCC","ATGCGAAT","ATGCGAAT","ATGCGAAT","ATGCGAAT","ATGCGAAT"]`
+		body := `{"dna":["ATGCGAAT","CAGTGCC","ATGCGAAT","ATGCGAAT","ATGCGAAT","ATGCGAAT","ATGCGAAT"]}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err != nil {
 			t.Fatal("Unmarshal: ", err.Error())
 		}
 
 		// Validaciones del sample
-		if err := sample.ValidateADN(); err == nil {
+		if err := sample.ValidateDNA(); err == nil {
 
 			t.Fatal("Se esperaba un error por recibir una tabla MxN")
 
@@ -53,14 +53,14 @@ func TestSample(t *testing.T) {
 	t.Run("Error de tabla NxM", func(t *testing.T) {
 
 		// La longitud de las cadenas es de 6 y del arreglo es de 7
-		body := `["ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG","TCACTG"]`
+		body := `{"dna":["ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG","TCACTG"]}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err != nil {
 			t.Fatal("Unmarshal: ", err.Error())
 		}
 
 		// Validaciones del sample
-		if err := sample.ValidateADN(); err == nil {
+		if err := sample.ValidateDNA(); err == nil {
 
 			t.Fatal("Se esperaba un error por recibir una tabla MxN")
 
@@ -70,16 +70,16 @@ func TestSample(t *testing.T) {
 	t.Run("Mutante", func(t *testing.T) {
 
 		// Mutante
-		body := `["ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG"]`
+		body := `{"dna":["ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG"]}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err != nil {
 			t.Fatal("Unmarshal: ", err.Error())
 		}
 
 		// Validaciones del sample
-		if err := sample.ValidateADN(); err != nil {
+		if err := sample.ValidateDNA(); err != nil {
 
-			t.Fatal("ValidateAdn: ", err.Error())
+			t.Fatal("ValidateDNA: ", err.Error())
 
 		}
 
@@ -99,16 +99,16 @@ func TestSample(t *testing.T) {
 	t.Run("Humano", func(t *testing.T) {
 
 		// No Mutante
-		body := `["ATGCGAA","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"]`
+		body := `{"dna":["ATGCGAA","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"]}`
 		var sample Sample
 		if err := sample.Unmarshal([]byte(body)); err != nil {
 			t.Fatal("Unmarshal: ", err.Error())
 		}
 
 		// Validaciones del sample
-		if err := sample.ValidateADN(); err != nil {
+		if err := sample.ValidateDNA(); err != nil {
 
-			t.Fatal("ValidateAdn: ", err.Error())
+			t.Fatal("ValidateDNA: ", err.Error())
 			return
 		}
 

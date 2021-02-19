@@ -2,31 +2,46 @@ package main
 
 import (
 	"log"
+	"os"
 
-	"github.com/kalmecak/mutantfinder/structs"
+	"github.com/gofiber/fiber/v2"
+	"github.com/kalmecak/mutantfinder/api"
+	"github.com/kalmecak/mutantfinder/config"
+	"github.com/kalmecak/mutantfinder/environment"
 )
 
 func main() {
 
-	// body := `["ATGCGAA","CAGTGCC","TTATTTA","AGACGGT","CGCTCAT","TCACTGT","TGGACTT"]` // No Mutante
-	body := `["ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG"]` // Mutante
-	var sample structs.Sample
-	if err := sample.Unmarshal([]byte(body)); err != nil {
-		log.Panic(err.Error())
-	}
+	/**************************************************************************/
+	/*               Verifcación de las variables de entorno                  */
+	/**************************************************************************/
+	if ok := environment.Validate(); ok == false {
 
-	// Validaciones del sample
-	if err := sample.ValidateADN(); err != nil {
-
-		log.Println("Error: ", err.Error())
+		log.Println("Entorno no configurado correctamente")
 		return
 	}
+	log.Println("Environment is ok!")
 
-	sample.Analyze()
+	app := fiber.New(fiber.Config{
+		CaseSensitive:    true,
+		ServerHeader:     "Mutant Finder",
+		DisableKeepalive: true,
+	})
 
-	log.Println("Número de matches: ", sample.Matches)
-	if sample.IsMutant() {
-		log.Println("El verga es mutante")
-		return
+	// Configuraciones
+	config.Accepts(app)
+	config.Security(app)
+	config.General(app)
+
+	// router
+	api.Router(app)
+	// Manejador de Páginas no encontradas
+	config.Page404(app)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+
+		port = "3000"
 	}
+	app.Listen(":" + port)
 }

@@ -1,18 +1,26 @@
 package structs
 
 import (
+	"encoding/base64"
 	"errors"
+	"log"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/kalmecak/gosigner"
 )
 
-// Sample estructura para analizar el ADN
+// Sample estructura para analizar el DNA
 type Sample struct {
 	Matches int
-	ADN     []string
+	DNA     []string `json:"dna"`
 	Matrix  [][]string
 }
+
+/*************************************************************
+*                      Métodos públicos                      *
+*************************************************************/
 
 // IsMutant regresa si una estructura ha guardado más de 1 match
 func (s Sample) IsMutant() bool {
@@ -24,7 +32,7 @@ func (s Sample) IsMutant() bool {
 // y diagonales (principal e inversa)
 func (s *Sample) Analyze() {
 
-	s.BuildMatrix()
+	s.buildMatrix()
 
 	var wg sync.WaitGroup
 	wg.Add(5)
@@ -38,6 +46,75 @@ func (s *Sample) Analyze() {
 	wg.Wait()
 }
 
+// Unmarshal parsea el byte array en la estructura
+func (s *Sample) Unmarshal(body []byte) error {
+
+	return json.Unmarshal(body, s)
+}
+
+// Signature genera un resumen de la estructura
+func (s *Sample) Signature() string {
+
+	var btArr []byte
+	btArr, err := json.Marshal(s)
+	if err != nil {
+
+		log.Println("*** structs.Sample.Signature.json.Marshal ***")
+		log.Println(err.Error())
+		log.Println("--- structs.Sample.Signature.json.Marshal ---")
+		return ""
+	}
+
+	btArr, err = gosigner.Hash256(btArr)
+	if err != nil {
+
+		log.Println("*** structs.Sample.Signature.gosigner.Hash256 ***")
+		log.Println(err.Error())
+		log.Println("--- structs.Sample.Signature.gosigner.Hash256 ---")
+		return ""
+	}
+
+	return base64.RawURLEncoding.EncodeToString(btArr)
+}
+
+// ValidateDNA revisa la validez del sample y aprovecha la iteración para analizar las secuencias
+// horizontales
+func (s *Sample) ValidateDNA() error {
+
+	size := len(s.DNA)
+	switch {
+	case size == 0:
+
+		return errors.New("La muestra está vacía")
+
+	case size < 4:
+
+		return errors.New("El análisis sólo se puede hacer con una tabla de mínimo 4x4")
+
+	}
+
+	musNotHave := regexp.MustCompile(`[^ATGC]`)
+
+	for i := 0; i < size; i++ {
+
+		if len(s.DNA[i]) != size {
+
+			return errors.New("Con los datos de la secuencia no se puede generar una tabla NxN")
+		}
+		if musNotHave.MatchString(s.DNA[i]) {
+
+			return errors.New("Hay caracteres no admitidos en la cadena de DNA")
+		}
+		// Analizamos horizontalmente aprovechando el loop
+		s.findSequence(s.DNA[i])
+	}
+	return nil
+}
+
+/*************************************************************
+*                      Métodos privados                      *
+*************************************************************/
+
 // findSequence encuentra una secuencia en un string
 func (s *Sample) findSequence(row string) {
 
@@ -47,49 +124,17 @@ func (s *Sample) findSequence(row string) {
 	}
 }
 
-// Unmarshal transforma el byte array en un string array y lo almacena en la propuedad ADN
-func (s *Sample) Unmarshal(sequence []byte) error {
+// BuildMatrix construye una matriz bidireccional con el alrreglo del DNA
+func (s *Sample) buildMatrix() {
 
-	return json.Unmarshal(sequence, &s.ADN)
-}
-
-// ValidateADN revisa la validez del sample y aprovecha la iteración para analizar las secuencias
-// horizontales
-func (s *Sample) ValidateADN() error {
-
-	size := len(s.ADN)
-	if size < 4 {
-		return errors.New("El análisis sólo se puede hacer con una tabla de mínimo 4x4")
-	}
-	musNotHave := regexp.MustCompile(`[^ATGC]`)
-
-	for i := 0; i < size; i++ {
-
-		if len(s.ADN[i]) != size {
-
-			return errors.New("Con los datos de la secuencia no se puede generar una tabla NxN")
-		}
-		if musNotHave.MatchString(s.ADN[i]) {
-
-			return errors.New("Hay caracteres no admitidos en la cadena de ADN")
-		}
-		// Analizamos horizontalmente
-		s.findSequence(s.ADN[i])
-	}
-	return nil
-}
-
-// BuildMatrix construye una matriz bidireccional con el alrreglo del ADN
-func (s *Sample) BuildMatrix() {
-
-	size := len(s.ADN)
+	size := len(s.DNA)
 	s.Matrix = make([][]string, size)
 
 	// log.Println("Matriz")
 	for i := range s.Matrix {
 
 		// log.Println(s.Matrix[i])
-		s.Matrix[i] = strings.Split(s.ADN[i], "")
+		s.Matrix[i] = strings.Split(s.DNA[i], "")
 	}
 }
 
@@ -98,7 +143,7 @@ func (s *Sample) findVertically(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
-	size := len(s.ADN)
+	size := len(s.DNA)
 	helper := make([][]string, size)
 	for i := range helper {
 
@@ -124,8 +169,8 @@ func (s *Sample) bottomRight(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var helper strings.Builder
-	max := len(s.ADN) - 1
-	min := len(s.ADN) - 5
+	max := len(s.DNA) - 1
+	min := len(s.DNA) - 5
 
 	// Búsqueda de abajo al medio
 	for i := min; i >= 0; i-- {
@@ -149,8 +194,8 @@ func (s *Sample) middleRightTop(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var helper strings.Builder
-	max := len(s.ADN) - 1
-	min := len(s.ADN) - 5
+	max := len(s.DNA) - 1
+	min := len(s.DNA) - 5
 
 	for i := min; i > 0; i-- {
 
@@ -172,7 +217,7 @@ func (s *Sample) topRight(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var helper strings.Builder
-	max := len(s.ADN) - 1
+	max := len(s.DNA) - 1
 	min := 3
 
 	// Búsqueda Izq al medio
@@ -196,7 +241,7 @@ func (s *Sample) middleRightBottom(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var helper strings.Builder
-	max := len(s.ADN) - 1
+	max := len(s.DNA) - 1
 	// Búsqueda en medio derecha
 	for i := max; i >= 4; i-- {
 
