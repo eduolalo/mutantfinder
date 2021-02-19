@@ -30,7 +30,7 @@ Clona el repo y entra a la carpeta "mutantfinder/", una vez dentro, puedes corre
 ```
 $ go gun main.go
 
-// te aparecerá algo así:
+// Después de instalar las dependencias te aparecerá algo así:
 
 2021/02/18 23:18:19 Environment is ok!
 

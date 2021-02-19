@@ -3,8 +3,7 @@ info:
   title: Mutant DNA Finder
   description: Proyecto para analizar muestras de ADN y reclutar Mutantes
   version: '1.0'
-servers:
-  - url: 34.238.49.183
+
 paths:
   /mutant:
     post:
