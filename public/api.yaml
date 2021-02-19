@@ -1,0 +1,114 @@
+openapi: '3.0.2'
+info:
+  title: Mutant DNA Finder
+  description: Proyecto para analizar muestras de ADN y reclutar Mutantes
+  version: '1.0'
+servers:
+  - url: 34.238.49.183
+paths:
+  /mutant:
+    post:
+      tags:
+        - "Analisis"
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          schema:
+            type: string
+            default: "application/json; charset=utf-8"
+      requestBody:
+        description: Muestra de la cadena de ADN del sujeto
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dna"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de la respuesta
+                  statusCode:
+                    type: string
+                    description: Código de la respuesta
+                example:
+                  message: Mutante
+                  code: 200
+        400:
+          description: La petición tiene un error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje del error
+                  statusCode:
+                    type: string
+                    description: Código de la respuesta
+                example:
+                  message: Con los datos de la secuencia no se puede generar una tabla NxN
+                  code: 400
+        403:
+          description: La muestra no es mutante
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje del error
+                  statusCode:
+                    type: string
+                    description: Código de la respuesta
+                example:
+                  message: Humano
+                  code: 403
+  /stats:
+    get:
+      tags:
+        - "Estadísticas"
+      responses:
+        200:
+          description: Información de los análisis
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    count_mutant_dna:
+                      type: integer
+                      description: Conteo de las pruebas mutantes positivas.
+                    count_human_dna:
+                      type: integer
+                      description: Conteo de las pruebas mutantes negativas.
+                    ratio:
+                      type: number
+                      format: float
+                      description: Porcentaje de muestras mutantes positivas.
+                  example:
+                    count_mutant_dna: 8
+                    count_human_dna: 3
+                    ratio: 0.7272727272727273
+components:
+  schemas:
+    dna:
+      type: object
+      properties:
+        dna:
+          type: array
+          items:
+            type: string
+            description: Cadenas de ADN representadas por las letras "A", "T", "G" y "C"
+      example:
+        dna: 
+          [TAGCGA,TAGTGA,TAAAGA,CACTTA,GAACTA,CACAAA]

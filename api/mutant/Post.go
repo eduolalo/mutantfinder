@@ -19,11 +19,11 @@ func Post(c *fiber.Ctx) error {
 
 	if mutant {
 
-		res.Ok("")
+		res.Ok("Mutante")
 		status = fiber.StatusOK
 	} else {
 
-		res.Forbridden("")
+		res.Forbridden("Humano")
 		status = fiber.StatusForbidden
 	}
 	// Almacenar los resultados

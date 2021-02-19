@@ -28,6 +28,7 @@ func main() {
 		DisableKeepalive: true,
 	})
 
+	app.Static("/", "./public")
 	// Configuraciones
 	config.Accepts(app)
 	config.Security(app)
